@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#7ba591">
+    <link rel="manifest" href="manifest.json">
+    <title>Task & Schedule Planner</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #a8d5ba 0%, #c9e4ca 50%, #e8f5e9 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #7ba591 0%, #95b8a3 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .upload-section {
+            padding: 30px;
+            background: #f5f5f5;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .file-input-wrapper {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        input[type="file"] {
+            padding: 12px 20px;
+            border: 2px solid #7ba591;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+        }
+
+        button {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #7ba591 0%, #95b8a3 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(123, 165, 145, 0.4);
+        }
+
+        .export-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .summary {
+            padding: 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #fff8e1 0%, #ffe0b2 100%);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .stat-card h3 {
+            color: #d68900;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .stat-card .number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #b36b00;
+        }
+
+        .view-toggle {
+            padding: 20px 30px;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            background: #fafafa;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .view-toggle button {
+            padding: 10px 25px;
+            background: white;
+            color: #7ba591;
+            border: 2px solid #7ba591;
+        }
+
+        .view-toggle button.active {
+            background: linear-gradient(135deg, #7ba591 0%, #95b8a3 100%);
+            color: white;
+        }
+
+        .calendar-container {
+            padding: 30px;
+        }
+
+        .monthly-view {
+            display: none;
+        }
+
+        .monthly-view.active {
+            display: block;
+        }
+
+        .month-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .month-header h2 {
+            color: #7ba591;
+            font-size: 1.8em;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+        }
+
+        .calendar-day-header {
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            color: #7ba591;
+            background: #f0f0f0;
+            border-radius: 8px;
+        }
+
+        .calendar-day {
+            min-height: 100px;
+            padding: 8px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .calendar-day:hover {
+            border-color: #7ba591;
+            box-shadow: 0 2px 8px rgba(123, 165, 145, 0.2);
+        }
+
+        .calendar-day.other-month {
+            opacity: 0.4;
+        }
+
+        .calendar-day.today {
+            border-color: #d68900;
+            background: #fff8e1;
+        }
+
+        .day-number {
+            font-weight: bold;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .day-task {
+            font-size: 0.75em;
+            padding: 3px 6px;
+            margin: 2px 0;
+            border-radius: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .daily-view {
+            display: none;
+        }
+
+        .daily-view.active {
+            display: block;
+        }
+
+        .daily-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .daily-header h2 {
+            color: #7ba591;
+            font-size: 1.8em;
+        }
+
+        .time-grid {
+            display: grid;
+            grid-template-columns: 80px 1fr;
+            gap: 0;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+            background: white;
+        }
+
+        .time-slot {
+            padding: 15px;
+            border-bottom: 1px solid #e0e0e0;
+            font-weight: bold;
+            color: #7ba591;
+            background: #f9f9f9;
+        }
+
+        .time-content {
+            padding: 15px;
+            border-bottom: 1px solid #e0e0e0;
+            min-height: 60px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .task-item {
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.9em;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* Category Colors */
+        .cat-work { background: #bbdefb; color: #1565c0; }
+        .cat-study { background: #c5cae9; color: #283593; }
+        .cat-exam { background: #f8bbd0; color: #c2185b; }
+        .cat-gym { background: #c8e6c9; color: #2e7d32; }
+        .cat-rest { background: #d1c4e9; color: #512da8; }
+        .cat-mental-health { background: #b2dfdb; color: #00695c; }
+        .cat-urgent { background: #ffccbc; color: #d84315; }
+        .cat-done { background: #c8e6c9; color: #388e3c; }
+        .cat-to-do { background: #fff9c4; color: #f57f17; }
+
+        /* Priority Borders */
+        .pri-high-urgent { border-left: 5px solid #c62828; font-weight: bold; }
+        .pri-high-not-urgent { border-left: 5px solid #ef5350; }
+        .pri-medium-urgent { border-left: 5px solid #fb8c00; }
+        .pri-medium-not-urgent { border-left: 5px solid #ffa726; }
+        .pri-low-urgent { border-left: 5px solid #fdd835; }
+        .pri-low-not-urgent { border-left: 5px solid #ffeb3b; }
+
+        .legend {
+            padding: 20px 30px;
+            background: #f5f5f5;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .legend h3 {
+            color: #7ba591;
+            margin-bottom: 15px;
+        }
+
+        .legend-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .legend-section {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .legend-section h4 {
+            margin-bottom: 10px;
+            color: #666;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 5px 0;
+            font-size: 0.9em;
+        }
+
+        .legend-color {
+            width: 40px;
+            height: 25px;
+            border-radius: 4px;
+        }
+
+        .legend-border {
+            width: 40px;
+            height: 25px;
+            border-left: 5px solid;
+            background: #f0f0f0;
+            border-radius: 4px;
+        }
+
+        @media print {
+            .upload-section, .view-toggle, .export-buttons, button {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📅 Task & Schedule Planner</h1>
+            <p>Upload your tasks and manage your schedule efficiently</p>
+        </header>
+
+        <div class="upload-section">
+            <div class="file-input-wrapper">
+                <input type="file" id="fileInput" accept=".txt">
+                <button onclick="processFile()">Load Tasks</button>
+                <div class="export-buttons">
+                    <button onclick="exportPDF()">📄 Export PDF</button>
+                    <button onclick="exportCSV()">📊 Export CSV</button>
+                    <button onclick="exportICS()">📆 Google Calendar</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="summary" class="summary"></div>
+
+        <div class="view-toggle">
+            <button class="active" onclick="switchView('monthly')">Monthly View</button>
+            <button onclick="switchView('daily')">Daily View</button>
+        </div>
+
+        <div class="calendar-container">
+            <div id="monthlyView" class="monthly-view active"></div>
+            <div id="dailyView" class="daily-view"></div>
+        </div>
+
+        <div class="legend">
+            <h3>Legend</h3>
+            <div class="legend-grid">
+                <div class="legend-section">
+                    <h4>Categories</h4>
+                    <div class="legend-item"><div class="legend-color cat-work"></div> Work</div>
+                    <div class="legend-item"><div class="legend-color cat-study"></div> Study</div>
+                    <div class="legend-item"><div class="legend-color cat-exam"></div> Exam</div>
+                    <div class="legend-item"><div class="legend-color cat-gym"></div> Gym</div>
+                    <div class="legend-item"><div class="legend-color cat-rest"></div> Rest</div>
+                    <div class="legend-item"><div class="legend-color cat-mental-health"></div> Mental Health</div>
+                    <div class="legend-item"><div class="legend-color cat-urgent"></div> Urgent</div>
+                    <div class="legend-item"><div class="legend-color cat-done"></div> Done</div>
+                    <div class="legend-item"><div class="legend-color cat-to-do"></div> To Do</div>
+                </div>
+                <div class="legend-section">
+                    <h4>Priority Levels</h4>
+                    <div class="legend-item"><div class="legend-border" style="border-left-color: #c62828;"></div> High Urgent</div>
+                    <div class="legend-item"><div class="legend-border" style="border-left-color: #ef5350;"></div> High Not Urgent</div>
+                    <div class="legend-item"><div class="legend-border" style="border-left-color: #fb8c00;"></div> Medium Urgent</div>
+                    <div class="legend-item"><div class="legend-border" style="border-left-color: #ffa726;"></div> Medium Not Urgent</div>
+                    <div class="legend-item"><div class="legend-border" style="border-left-color: #fdd835;"></div> Low Urgent</div>
+                    <div class="legend-item"><div class="legend-border" style="border-left-color: #ffeb3b;"></div> Low Not Urgent</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let tasks = [];
+        let currentMonth = new Date();
+        let currentDay = new Date();
+
+        function processFile() {
+            const input = document.getElementById('fileInput');
+            const file = input.files[0];
+            
+            if (!file) {
+                alert('Please select a file first');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const content = e.target.result;
+                parseTasksFromFile(content);
+            };
+            reader.readAsText(file);
+        }
+
+        function parseTasksFromFile(content) {
+            tasks = [];
+            const lines = content.split('\n');
+            const timeSlots = {};
+
+            lines.forEach(line => {
+                line = line.trim();
+                if (!line) return;
+
+                const task = {
+                    date: null,
+                    time: null,
+                    task: '',
+                    priority: 'Medium Not Urgent',
+                    category: 'To Do'
+                };
+
+                const dateMatch = line.match(/Date:\s*(\d{4}-\d{2}-\d{2})/i);
+                const timeMatch = line.match(/Time:\s*(\d{1,2}):(\d{2})/i);
+                const taskMatch = line.match(/Task:\s*([^,]+)/i);
+                const priorityMatch = line.match(/Priority:\s*([^,]+)/i);
+                const categoryMatch = line.match(/Category:\s*([^,]+)/i);
+
+                if (dateMatch) task.date = dateMatch[1];
+                if (timeMatch) task.time = `${timeMatch[1].padStart(2, '0')}:${timeMatch[2]}`;
+                if (taskMatch) task.task = taskMatch[1].trim();
+                if (priorityMatch) task.priority = priorityMatch[1].trim();
+                if (categoryMatch) task.category = categoryMatch[1].trim();
+
+                if (task.date && task.task) {
+                    if (!task.time) {
+                        const dateKey = task.date;
+                        if (!timeSlots[dateKey]) {
+                            timeSlots[dateKey] = Array.from({length: 12}, (_, i) => 8 + i);
+                        }
+                        if (timeSlots[dateKey].length > 0) {
+                            const hour = timeSlots[dateKey].shift();
+                            task.time = `${hour.toString().padStart(2, '0')}:00`;
+                        } else {
+                            task.time = '20:00';
+                        }
+                    }
+                    tasks.push(task);
+                }
+            });
+
+            tasks.sort((a, b) => {
+                const dateCompare = a.date.localeCompare(b.date);
+                if (dateCompare !== 0) return dateCompare;
+                return (a.time || '').localeCompare(b.time || '');
+            });
+
+            displaySummary();
+            renderMonthlyView();
+            renderDailyView();
+        }
+
+        function displaySummary() {
+            const summary = document.getElementById('summary');
+            const today = new Date().toISOString().split('T')[0];
+            
+            const total = tasks.length;
+            const overdue = tasks.filter(t => t.date < today).length;
+            const next7 = tasks.filter(t => {
+                const diff = (new Date(t.date) - new Date(today)) / (1000 * 60 * 60 * 24);
+                return diff >= 0 && diff <= 7;
+            }).length;
+            const next30 = tasks.filter(t => {
+                const diff = (new Date(t.date) - new Date(today)) / (1000 * 60 * 60 * 24);
+                return diff >= 0 && diff <= 30;
+            }).length;
+
+            const categoryCount = {};
+            const priorityCount = {};
+            
+            tasks.forEach(t => {
+                categoryCount[t.category] = (categoryCount[t.category] || 0) + 1;
+                priorityCount[t.priority] = (priorityCount[t.priority] || 0) + 1;
+            });
+
+            let html = `
+                <div class="stat-card">
+                    <h3>Total Tasks</h3>
+                    <div class="number">${total}</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Overdue</h3>
+                    <div class="number">${overdue}</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Next 7 Days</h3>
+                    <div class="number">${next7}</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Next 30 Days</h3>
+                    <div class="number">${next30}</div>
+                </div>
+            `;
+
+            summary.innerHTML = html;
+        }
+
+        function renderMonthlyView() {
+            const container = document.getElementById('monthlyView');
+            const year = currentMonth.getFullYear();
+            const month = currentMonth.getMonth();
+            
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const startDay = firstDay.getDay();
+            const daysInMonth = lastDay.getDate();
+
+            let html = `
+                <div class="month-header">
+                    <button onclick="changeMonth(-1)">← Previous</button>
+                    <h2>${firstDay.toLocaleString('default', { month: 'long', year: 'numeric' })}</h2>
+                    <button onclick="changeMonth(1)">Next →</button>
+                </div>
+                <div class="calendar-grid">
+                    <div class="calendar-day-header">Sun</div>
+                    <div class="calendar-day-header">Mon</div>
+                    <div class="calendar-day-header">Tue</div>
+                    <div class="calendar-day-header">Wed</div>
+                    <div class="calendar-day-header">Thu</div>
+                    <div class="calendar-day-header">Fri</div>
+                    <div class="calendar-day-header">Sat</div>
+            `;
+
+            for (let i = 0; i < startDay; i++) {
+                const prevMonthDay = new Date(year, month, -startDay + i + 1);
+                html += `<div class="calendar-day other-month"><div class="day-number">${prevMonthDay.getDate()}</div></div>`;
+            }
+
+            const today = new Date().toISOString().split('T')[0];
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(year, month, day);
+                const dateStr = date.toISOString().split('T')[0];
+                const dayTasks = tasks.filter(t => t.date === dateStr);
+                const isToday = dateStr === today;
+
+                html += `<div class="calendar-day ${isToday ? 'today' : ''}" onclick="viewDay('${dateStr}')">
+                    <div class="day-number">${day}</div>`;
+                
+                dayTasks.slice(0, 3).forEach(task => {
+                    const catClass = getCategoryClass(task.category);
+                    html += `<div class="day-task ${catClass}">${task.time || ''} ${task.task}</div>`;
+                });
+
+                if (dayTasks.length > 3) {
+                    html += `<div class="day-task">+${dayTasks.length - 3} more</div>`;
+                }
+
+                html += `</div>`;
+            }
+
+            const remainingDays = 42 - (startDay + daysInMonth);
+            for (let i = 1; i <= remainingDays; i++) {
+                html += `<div class="calendar-day other-month"><div class="day-number">${i}</div></div>`;
+            }
+
+            html += `</div>`;
+            container.innerHTML = html;
+        }
+
+        function renderDailyView() {
+            const container = document.getElementById('dailyView');
+            const dateStr = currentDay.toISOString().split('T')[0];
+            const dayTasks = tasks.filter(t => t.date === dateStr);
+
+            let html = `
+                <div class="daily-header">
+                    <button onclick="changeDay(-1)">← Previous Day</button>
+                    <h2>${currentDay.toLocaleDateString('default', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</h2>
+                    <button onclick="changeDay(1)">Next Day →</button>
+                </div>
+                <div class="time-grid">
+            `;
+
+            for (let hour = 8; hour <= 20; hour++) {
+                const timeStr = `${hour.toString().padStart(2, '0')}:00`;
+                const hourTasks = dayTasks.filter(t => t.time && t.time.startsWith(hour.toString().padStart(2, '0')));
+
+                html += `
+                    <div class="time-slot">${hour === 12 ? '12 PM' : hour > 12 ? (hour - 12) + ' PM' : hour + ' AM'}</div>
+                    <div class="time-content">
+                `;
+
+                hourTasks.forEach(task => {
+                    const catClass = getCategoryClass(task.category);
+                    const priClass = getPriorityClass(task.priority);
+                    html += `<div class="task-item ${catClass} ${priClass}">
+                        <strong>${task.time}</strong> - ${task.task}<br>
+                        <small>${task.category} | ${task.priority}</small>
+                    </div>`;
+                });
+
+                html += `</div>`;
+            }
+
+            html += `</div>`;
+            container.innerHTML = html;
+        }
+
+        function getCategoryClass(category) {
+            return 'cat-' + category.toLowerCase().replace(/\s+/g, '-');
+        }
+
+        function getPriorityClass(priority) {
+            return 'pri-' + priority.toLowerCase().replace(/\s+/g, '-');
+        }
+
+        function changeMonth(delta) {
+            currentMonth.setMonth(currentMonth.getMonth() + delta);
+            renderMonthlyView();
+        }
+
+        function changeDay(delta) {
+            currentDay.setDate(currentDay.getDate() + delta);
+            renderDailyView();
+        }
+
+        function viewDay(dateStr) {
+            currentDay = new Date(dateStr);
+            switchView('daily');
+        }
+
+        function switchView(view) {
+            document.querySelectorAll('.view-toggle button').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+
+            if (view === 'monthly') {
+                document.getElementById('monthlyView').classList.add('active');
+                document.getElementById('dailyView').classList.remove('active');
+            } else {
+                document.getElementById('monthlyView').classList.remove('active');
+                document.getElementById('dailyView').classList.add('active');
+            }
+        }
+
+        function exportPDF() {
+            window.print();
+        }
+
+        function exportCSV() {
+            let csv = 'Date,Time,Task,Priority,Category\n';
+            tasks.forEach(task => {
+                csv += `${task.date},${task.time || ''},${task.task},${task.priority},${task.category}\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'tasks.csv';
+            a.click();
+        }
+
+        function exportICS() {
+            let ics = 'BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Task Planner//EN\n';
+
+            tasks.forEach(task => {
+                const [year, month, day] = task.date.split('-');
+                const [hour, minute] = (task.time || '12:00').split(':');
+                const dtstart = `${year}${month}${day}T${hour}${minute}00`;
+                
+                ics += `BEGIN:VEVENT\n`;
+                ics += `DTSTART:${dtstart}\n`;
+                ics += `SUMMARY:${task.task}\n`;
+                ics += `DESCRIPTION:Priority: ${task.priority}, Category: ${task.category}\n`;
+                ics += `END:VEVENT\n`;
+            });
+
+            ics += 'END:VCALENDAR';
+
+            const blob = new Blob([ics], { type: 'text/calendar' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'tasks.ics';
+            a.click();
+        }
+
+        // Register service worker for offline functionality
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(registration => {
+                        console.log('Service Worker registered:', registration.scope);
+                    })
+                    .catch(err => {
+                        console.log('Service Worker registration failed:', err);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>

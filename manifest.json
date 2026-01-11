@@ -1,0 +1,22 @@
+{
+  "name": "Task & Schedule Planner",
+  "short_name": "Task Planner",
+  "description": "Plan your tasks and schedule efficiently",
+  "start_url": "./mobile.html",
+  "display": "standalone",
+  "background_color": "#a8d5ba",
+  "theme_color": "#7ba591",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect fill='%237ba591' width='192' height='192' rx='20'/%3E%3Cpath fill='%23fff' d='M48 96l32 32 64-64' stroke='%23fff' stroke-width='12' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect fill='%237ba591' width='512' height='512' rx='50'/%3E%3Cpath fill='%23fff' d='M128 256l86 86 170-170' stroke='%23fff' stroke-width='32' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}
