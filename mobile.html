@@ -447,6 +447,36 @@
         </div>
     </div>
 
+    <div id="calendarPage" class="page">
+        <h2 style="color: var(--primary); margin-bottom: 20px;">📅 Calendar</h2>
+        
+        <div class="chart-container">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <button class="icon-btn" onclick="changeMonth(-1)" style="color: var(--primary); font-size: 1.5em;">◀</button>
+                <h3 id="calendarMonth" style="margin: 0;">January 2026</h3>
+                <button class="icon-btn" onclick="changeMonth(1)" style="color: var(--primary); font-size: 1.5em;">▶</button>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <button class="btn" onclick="setCalendarView('month')" id="monthViewBtn" style="flex: 1; background: var(--primary); color: white;">Month</button>
+                <button class="btn" onclick="setCalendarView('week')" id="weekViewBtn" style="flex: 1;">Week</button>
+                <button class="btn" onclick="setCalendarView('day')" id="dayViewBtn" style="flex: 1;">Day</button>
+            </div>
+            
+            <div id="calendarGrid"></div>
+        </div>
+        
+        <div id="calendarTasksDetail" style="margin-top: 20px;"></div>
+    </div>
+
+    <div id="dateDetailModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalDateTitle" style="margin-bottom: 20px;">Tasks</h2>
+            <div id="modalDateTasks"></div>
+            <button class="btn" onclick="closeDateModal()" style="width: 100%; background: #ccc; margin-top: 20px;">Close</button>
+        </div>
+    </div>
+
     <button class="fab" onclick="openAddTask()">+</button>
 
     <div class="bottom-nav">
@@ -457,6 +487,10 @@
         <button class="nav-btn" onclick="switchPage('allTasks')">
             <span style="font-size: 1.5em;">📋</span>
             All
+        </button>
+        <button class="nav-btn" onclick="switchPage('calendar')">
+            <span style="font-size: 1.5em;">📅</span>
+            Calendar
         </button>
         <button class="nav-btn" onclick="switchPage('reports')">
             <span style="font-size: 1.5em;">📊</span>
@@ -473,6 +507,8 @@
         let tasks = [];
         let charts = {};
         let currentRescheduleTask = null;
+        let calendarDate = new Date();
+        let calendarView = 'month';
 
         document.addEventListener('DOMContentLoaded', () => {
             loadTasks();
@@ -498,12 +534,14 @@
             
             if (page === 'today') renderToday();
             if (page === 'allTasks') renderAllTasks();
+            if (page === 'calendar') renderCalendar();
             if (page === 'reports') renderReports();
         }
 
         function renderAll() {
             renderToday();
             renderAllTasks();
+            renderCalendar();
         }
 
         function renderToday() {
@@ -807,6 +845,231 @@
                     alert('✅ All tasks have been deleted');
                 }
             }
+        }
+
+        function changeMonth(direction) {
+            calendarDate.setMonth(calendarDate.getMonth() + direction);
+            renderCalendar();
+        }
+
+        function setCalendarView(view) {
+            calendarView = view;
+            document.getElementById('monthViewBtn').style.background = view === 'month' ? 'var(--primary)' : '#e0e0e0';
+            document.getElementById('monthViewBtn').style.color = view === 'month' ? 'white' : 'var(--text-dark)';
+            document.getElementById('weekViewBtn').style.background = view === 'week' ? 'var(--primary)' : '#e0e0e0';
+            document.getElementById('weekViewBtn').style.color = view === 'week' ? 'white' : 'var(--text-dark)';
+            document.getElementById('dayViewBtn').style.background = view === 'day' ? 'var(--primary)' : '#e0e0e0';
+            document.getElementById('dayViewBtn').style.color = view === 'day' ? 'white' : 'var(--text-dark)';
+            renderCalendar();
+        }
+
+        function renderCalendar() {
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+            document.getElementById('calendarMonth').textContent = `${monthNames[calendarDate.getMonth()]} ${calendarDate.getFullYear()}`;
+            
+            if (calendarView === 'month') {
+                renderMonthView();
+            } else if (calendarView === 'week') {
+                renderWeekView();
+            } else {
+                renderDayView();
+            }
+        }
+
+        function renderMonthView() {
+            const year = calendarDate.getFullYear();
+            const month = calendarDate.getMonth();
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const today = new Date();
+            const todayStr = today.toISOString().split('T')[0];
+            
+            let html = '<div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-bottom: 10px;">';
+            
+            ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach(day => {
+                html += `<div style="text-align: center; font-weight: bold; color: var(--primary); padding: 5px;">${day}</div>`;
+            });
+            
+            for (let i = 0; i < firstDay; i++) {
+                html += '<div></div>';
+            }
+            
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const dayTasks = tasks.filter(t => t.date === dateStr);
+                const isToday = dateStr === todayStr;
+                
+                let bgColor = isToday ? 'var(--primary)' : '#f5f5f5';
+                let textColor = isToday ? 'white' : 'var(--text-dark)';
+                
+                html += `<div onclick="showDateDetail('${dateStr}')" style="
+                    background: ${bgColor};
+                    color: ${textColor};
+                    padding: 8px;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    min-height: 80px;
+                    position: relative;
+                    ${isToday ? 'font-weight: bold; box-shadow: 0 2px 8px rgba(0,0,0,0.2);' : ''}
+                ">
+                    <div style="font-size: 0.9em; margin-bottom: 5px;">${day}</div>`;
+                
+                if (dayTasks.length > 0) {
+                    dayTasks.slice(0, 2).forEach(task => {
+                        const catClass = getCategoryClass(task.category);
+                        const colors = {
+                            'cat-work': '#2196f3',
+                            'cat-study': '#9c27b0',
+                            'cat-exam': '#f44336',
+                            'cat-gym': '#ff9800',
+                            'cat-rest': '#4caf50',
+                            'cat-mental': '#00bcd4',
+                            'cat-urgent': '#d32f2f',
+                            'cat-todo': '#757575',
+                            'cat-done': '#66bb6a'
+                        };
+                        const color = colors[catClass] || '#757575';
+                        
+                        html += `<div style="
+                            background: ${color};
+                            color: white;
+                            font-size: 0.65em;
+                            padding: 2px 4px;
+                            border-radius: 3px;
+                            margin: 2px 0;
+                            overflow: hidden;
+                            text-overflow: ellipsis;
+                            white-space: nowrap;
+                        ">${task.task}</div>`;
+                    });
+                    
+                    if (dayTasks.length > 2) {
+                        html += `<div style="font-size: 0.7em; margin-top: 2px; opacity: 0.8;">+${dayTasks.length - 2} more</div>`;
+                    }
+                }
+                
+                html += '</div>';
+            }
+            
+            html += '</div>';
+            document.getElementById('calendarGrid').innerHTML = html;
+        }
+
+        function renderWeekView() {
+            const today = new Date();
+            const currentDay = calendarDate.getDay();
+            const startOfWeek = new Date(calendarDate);
+            startOfWeek.setDate(calendarDate.getDate() - currentDay);
+            
+            let html = '<div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px;">';
+            
+            for (let i = 0; i < 7; i++) {
+                const date = new Date(startOfWeek);
+                date.setDate(startOfWeek.getDate() + i);
+                const dateStr = date.toISOString().split('T')[0];
+                const dayTasks = tasks.filter(t => t.date === dateStr);
+                const isToday = dateStr === today.toISOString().split('T')[0];
+                const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                
+                html += `<div onclick="showDateDetail('${dateStr}')" style="
+                    background: ${isToday ? 'var(--primary)' : '#f5f5f5'};
+                    color: ${isToday ? 'white' : 'var(--text-dark)'};
+                    padding: 10px;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    min-height: 150px;
+                ">
+                    <div style="font-weight: bold; margin-bottom: 5px;">${dayNames[i]}</div>
+                    <div style="font-size: 1.2em; margin-bottom: 10px;">${date.getDate()}</div>`;
+                
+                dayTasks.forEach(task => {
+                    const catClass = getCategoryClass(task.category);
+                    const colors = {
+                        'cat-work': '#2196f3',
+                        'cat-study': '#9c27b0',
+                        'cat-exam': '#f44336',
+                        'cat-gym': '#ff9800',
+                        'cat-rest': '#4caf50',
+                        'cat-mental': '#00bcd4',
+                        'cat-urgent': '#d32f2f',
+                        'cat-todo': '#757575',
+                        'cat-done': '#66bb6a'
+                    };
+                    const color = colors[catClass] || '#757575';
+                    
+                    html += `<div style="
+                        background: ${color};
+                        color: white;
+                        font-size: 0.75em;
+                        padding: 4px;
+                        border-radius: 4px;
+                        margin: 3px 0;
+                    ">${task.time || ''} ${task.task}</div>`;
+                });
+                
+                html += '</div>';
+            }
+            
+            html += '</div>';
+            document.getElementById('calendarGrid').innerHTML = html;
+        }
+
+        function renderDayView() {
+            const dateStr = calendarDate.toISOString().split('T')[0];
+            const dayTasks = tasks.filter(t => t.date === dateStr).sort((a, b) => {
+                if (!a.time) return 1;
+                if (!b.time) return -1;
+                return a.time.localeCompare(b.time);
+            });
+            
+            const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            const dayName = dayNames[calendarDate.getDay()];
+            
+            let html = `<div style="text-align: center; margin-bottom: 20px;">
+                <h3>${dayName}, ${calendarDate.getDate()}</h3>
+                <p style="color: var(--primary);">${dayTasks.length} task${dayTasks.length !== 1 ? 's' : ''}</p>
+            </div>`;
+            
+            if (dayTasks.length === 0) {
+                html += '<div style="text-align: center; color: #999; padding: 40px;">No tasks for this day</div>';
+            } else {
+                dayTasks.forEach(task => {
+                    html += renderTaskCard(task);
+                });
+            }
+            
+            document.getElementById('calendarGrid').innerHTML = html;
+        }
+
+        function showDateDetail(dateStr) {
+            const date = new Date(dateStr);
+            const dayTasks = tasks.filter(t => t.date === dateStr);
+            
+            document.getElementById('modalDateTitle').textContent = `${date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}`;
+            
+            let html = '';
+            if (dayTasks.length === 0) {
+                html = '<p style="text-align: center; color: #999; padding: 20px;">No tasks for this day</p>';
+            } else {
+                dayTasks.forEach(task => {
+                    html += renderTaskCard(task);
+                });
+            }
+            
+            document.getElementById('modalDateTasks').innerHTML = html;
+            document.getElementById('dateDetailModal').classList.add('active');
+            
+            // Also show in detail section below calendar
+            document.getElementById('calendarTasksDetail').innerHTML = `
+                <div class="chart-container">
+                    <h3 style="margin-bottom: 15px;">${date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</h3>
+                    ${html}
+                </div>
+            `;
+        }
+
+        function closeDateModal() {
+            document.getElementById('dateDetailModal').classList.remove('active');
         }
 
         function checkNotifications() {
