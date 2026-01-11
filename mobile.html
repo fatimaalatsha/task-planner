@@ -384,6 +384,13 @@
                 🔔 Enable Notifications
             </button>
         </div>
+
+        <div class="chart-container">
+            <h3 style="margin-bottom: 15px;">Reset</h3>
+            <button class="btn" onclick="resetCalendar()" style="width: 100%; background: #f44336; color: white;">
+                🗑️ Reset All Tasks
+            </button>
+        </div>
     </div>
 
     <div id="addTaskModal" class="modal">
@@ -788,6 +795,17 @@
                 });
             } else {
                 alert('Notifications not supported on this device');
+            }
+        }
+
+        function resetCalendar() {
+            if (confirm('⚠️ Are you sure you want to delete ALL tasks?\n\nThis action cannot be undone!')) {
+                if (confirm('🚨 Final confirmation: Delete everything?')) {
+                    tasks = [];
+                    saveTasks();
+                    renderAll();
+                    alert('✅ All tasks have been deleted');
+                }
             }
         }
 
